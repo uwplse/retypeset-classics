@@ -1,11 +1,141 @@
 \documentclass{article}
 \usepackage[margin=1in]{geometry}
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
 
+\title{Types, Abstraction, and Parametric Polymorphism}
 
 
 \begin{document}
+\maketitle
+This document re-presents much of Reynolds' classic \emph{Types, Abstraction, and Parametric
+Polymorphism} paper in modern notation.  This is the paper that defined parametricity.
 
+\section*{An Extended Lambda Calculus}
+This section defines syntax, typing, and denotational semantics for a language that is subjectively either
+slightly more general than STLC (James' opinion) or slightly more restricted than System F (Colin's
+opinion).  The language is approximately STLC plus some unspecified types, or System F minus
+explicit type quantification.
 
+Syntax:
+\newcommand{\cond}[3]{\ensuremath{\mathsf{if}(#1)\mathsf{then}\{#2\}\mathsf{else}\{#3\}}}
+\[
+    \begin{array}{lrcl}
+        \textrm{Type Constants} & \kappa & \in & C \;\textrm{(includes booleans)}\\
+        \textrm{Type Variables} & \tau & \in & T\\
+        \textrm{Types} & \omega\in\Omega & ::= & \kappa \mid \tau \mid \omega \rightarrow \omega'
+        \mid \omega \times \omega'\\
+        \textrm{Variables} & x,y,z & \in & V\\
+        \textrm{Constants} & k & \in & \kappa\\
+        \textrm{Expressions} & e & ::= & k \mid x \mid e_1(e_2) \mid (\lambda x:\omega\ldotp e) \mid
+        \langle e_1 , e_2 \rangle \mid e.1 \mid e.2 \mid \cond{e}{e_1}{e_2}
+    \end{array}
+\]
+
+Type rules:
+\begin{mathpar}
+    \inferrule{ k \in \kappa_\omega }{ \pi\vdash k : \omega }
+    \and
+    \inferrule{ }{\pi\vdash x : \pi(x) }
+    \and
+    \inferrule{
+        \pi\vdash e_1 : \omega\rightarrow\omega'\\
+        \pi\vdash e_2 : \omega
+    }{
+        \pi\vdash e_1(e_2) : \omega'
+    }
+    \and
+    \inferrule{
+        \pi,v:\omega\vdash e : \omega'
+    }{
+        \pi\vdash \lambda v:\omega\ldotp e : \omega'
+    }
+    \and
+    \inferrule{
+        \pi\vdash e : \omega\\
+        \pi\vdash e' : \omega'\\
+    }{
+        \pi\vdash\langle e,e'\rangle : \omega\times\omega'
+    }
+    \and
+    \inferrule{
+        \pi\vdash\langle e\rangle : \omega\times\omega'
+    }{
+        \pi\vdash\langle e.1\rangle : \omega
+    }
+    \and
+    \inferrule{
+        \pi\vdash\langle e\rangle : \omega\times\omega'
+    }{
+        \pi\vdash\langle e.2\rangle : \omega'
+    }
+    \and
+    \inferrule{
+        \pi\vdash b : \mathsf{bool}\\
+        \pi\vdash e : \omega\\
+        \pi\vdash e' : \omega
+    }{
+        \pi\vdash\cond{b}{e}{e'} : \omega
+    }
+\end{mathpar}
+
+Next Reynolds defines denotational semantics --- an interpretation of the above language into set
+theory in terms of a mapping $S$ assigning sets to type variables and a mapping $CS$ assigning sets
+to the base types such that $CS(\mathsf{bool})=\{\mathsf{true},\mathsf{false}\}$.  Specifically, this is a pair of
+interpretations: interpreting types as the set of elements they contain, and terms as functions from
+the set of contexts to the set representing the appropriate type.
+
+Reynolds calls the first function, denoting types as the set of their elements, $S^\#$.
+
+\newcommand{\denote}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}}}
+\[
+    \begin{array}{rcl}
+        \denote{\kappa}{S} & = & CS(\kappa)\\
+        \denote{\tau}{S} & = & S(\kappa)\\
+        \denote{\omega\rightarrow\omega'}{S} & = & \denote{\omega}{S}\rightarrow\denote{\omega'}{S}\\
+        \denote{\omega\times\omega'}{S} & = & \denote{\omega}{S}\times\denote{\omega'}{S}\\
+    \end{array}
+\]
+Where $\rightarrow$ and $\times$ can be used in the meta language to note a set of functions, or the
+cartesian product, respectively.
+
+Reynolds lifts this first function again to type environments as $S^{\#\star}$:
+\[
+    \denote{\pi}{S} = \lambda {v\in\mathsf{dom}(\pi)}\ldotp\denote{\pi(v)}{S}
+\]
+
+Expression semantics: Reynolds defines $\mu_{\pi\omega}$ as a mapping from well-typed terms and
+semantic mappings to functions from environments to set elements.  He assumes for each constant type
+$\omega$ a mapping $\alpha_\omega : \kappa_\omega \rightarrow \denote{\omega}{S}$.
+\newcommand{\edenote}[5]{\ensuremath{{}^{#1}_{#2}\llbracket #3\rrbracket_{#4}(#5)}}
+\[
+    \begin{array}{rcl}
+        \edenote{\pi}{\omega}{-}{-}{-} & : & \{ e \mid \pi\vdash e : \omega \} \rightarrow
+        \Pi_{S:\mathcal{S}} (\denote{\pi}{S}\rightarrow\denote{\omega}{S})\\
+        \edenote{\pi}{\omega}{k}{S}{\eta} & = & \alpha_\omega\;k\\
+        \edenote{\pi}{\omega}{v}{S}{\eta} & = & \eta\;v\\
+        \edenote{\pi}{\omega'}{e_1(e_2)}{S}{\eta} & = &
+            \edenote{\pi}{\omega\rightarrow\omega'}{e_1}{S}{\eta}(\edenote{\pi}{\omega}{e_2}{S}{\eta})\\
+        \edenote{\pi}{\omega\rightarrow\omega'}{\lambda x:\omega\ldotp e}{S}{\eta} & = & f \;\textrm{such that}\;
+            f\;x=\edenote{\pi,v:\omega}{\omega'}{e}{S}{\eta,v:x}
+        \\
+        \edenote{\pi}{\omega\times\omega'}{\langle e,e' \rangle}{S}{\eta} & = & 
+            \langle
+            \edenote{\pi}{\omega}{e}{S}{\eta}
+            ,
+            \edenote{\pi}{\omega'}{e'}{S}{\eta}
+            \rangle
+        \\
+        \edenote{\pi}{\omega}{e.1}{S}{\eta} & = & \edenote{\pi}{\omega\times\omega'}{e}{S}{\eta}_1\\
+        \edenote{\pi}{\omega'}{e.2}{S}{\eta} & = & \edenote{\pi}{\omega\times\omega'}{e}{S}{\eta}_2\\
+    \end{array}
+\]
+This is a standard set-theoretic denotational semantics.
+
+\section*{The Abstraction Theorem}
+This section is the heart of the paper, establishing the main result.  The rest of the paper is a
+mixture of connections to related work and (important!) generalizations (modulo the assumption in
+Section 8 of a set-theoretic semantics for System F which Reynolds later proved could not exist).
 
 
 \end{document}
