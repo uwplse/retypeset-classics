@@ -3,6 +3,8 @@
 \usepackage{mathpartir}
 \usepackage{stmaryrd}
 
+\newtheorem{theorem}{Theorem}
+
 \title{Types, Abstraction, and Parametric Polymorphism}
 
 
@@ -137,5 +139,75 @@ This section is the heart of the paper, establishing the main result.  The rest 
 mixture of connections to related work and (important!) generalizations (modulo the assumption in
 Section 8 of a set-theoretic semantics for System F which Reynolds later proved could not exist).
 
+\newcommand{\rel}[2]{\ensuremath{\mathsf{Rel}(#1, #2)}}
+
+For two set assignments $S_1$ and $S_2$, a \emph{relation assignment} is a function of type:
+\[
+    \Pi_{\tau\in T}\rel{S_1}{S_2}
+\]
+We can lift a relation assignment $R$ from type variables to types:
+\[
+    R^{\#} : 
+    \Pi_{\omega\in\Omega}\rel{S_1^{\#}(\omega)}{S_2^{\#}(\omega)}
+\]
+
+as follows
+\[
+    \begin{array}{rcl}
+    R^{\#}(\kappa) & = & I(CS(\kappa))\\
+    R^{\#}(\tau) & = & R\;\tau\\
+    R^{\#}(\omega\rightarrow\omega') & = & R^{\#}(\omega)\rightarrow R^{\#}(\omega')\\
+    R^{\#}(\omega\times\omega') & = & R^{\#}(\omega)\times R^{\#}(\omega')\\
+    \end{array}
+\]
+
+And $R^{\#}$ can be lifted further to operating on type environments ($R^{\#\star}$) in the obvious
+way.
+
+This is enough for us to (re)state the major theorems of the paper.
+
+The first is a statement that the identity relation carries through the liftings to types and type
+environments just described.
+\begin{theorem}[Identity Extension]
+Suppose $IA$ is a relation assignment such that $IA\;\tau=I(S\;\tau)$ for some subset of type
+variables $T_0$ ($\tau\in
+T_0\subseteq T$).  Then
+\begin{itemize}
+\item $\forall \omega\ldotp FV(\omega)\subseteq T_0 \Rightarrow IA^{\#}(\omega) = I(\denote{\omega}{S})$, and
+\item $\forall \pi\ldotp (\forall v\in\mathsf{dom}(\pi)\ldotp FV(\pi(v))\subseteq T_0) \Rightarrow
+        IA^{\#\star}(\pi) = I(S^{\#\star}(\pi))$
+\end{itemize}
+\end{theorem}
+
+\begin{theorem}[Abstraction Theorem (Parametricity)]
+For relation assignment $R$ between set assignments $S_1$ and $S_2$, 
+for all $\pi$, $\omega$, $e$ such that $\pi\vdash e : \omega$, and 
+$\langle \eta_1, \eta_2\rangle\in R$,
+\[
+    \langle
+    \edenote{\pi}{\omega}{e}{S_1}{\eta_1}
+    ,
+    \edenote{\pi}{\omega}{e}{S_2}{\eta_2}
+    \rangle
+    \in R^{\#\star}
+\]
+\end{theorem}
+
+Another way to state this second theorem in English is that for any well-typed expression $e$ assuming
+some number of abstract types, given 2 instantiations of that type related by a relation $R$, if
+two dynamic environment bindings are related by $R$ (suitably lifted), then the results of evaluting
+$e$ in those two environments (corresponding to two instantiations of the abstract types) will also
+be related by $R$.
+
+To connect back to the introduction, given two dynamic environments for the two representations of
+complex numbers, because the representations are in bijective correspondence, any expression
+evaluated with input environments in bijective correspondence will produce outputs in bijective
+correspondence.
+
+The term ``parametricity'' was actually coined later by Phil Wadler in his ``Theorems for Free''
+paper.
+
+The rest of the paper expands these two theorems for various forms of type quantification/binding,
+and relates to some other work on denotational models of typed lambda calculi.
 
 \end{document}
