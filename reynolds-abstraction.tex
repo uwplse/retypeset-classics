@@ -143,7 +143,7 @@ Section 8 of a set-theoretic semantics for System F which Reynolds later proved 
 
 For two set assignments $S_1$ and $S_2$, a \emph{relation assignment} is a function of type:
 \[
-    \Pi_{\tau\in T}\rel{S_1}{S_2}
+    \Pi_{\tau\in T}\rel{S_1\tau}{S_2\tau}
 \]
 We can lift a relation assignment $R$ from type variables to types:
 \[
@@ -182,14 +182,14 @@ T_0\subseteq T$).  Then
 \begin{theorem}[Abstraction Theorem (Parametricity)]
 For relation assignment $R$ between set assignments $S_1$ and $S_2$, 
 for all $\pi$, $\omega$, $e$ such that $\pi\vdash e : \omega$, and 
-$\langle \eta_1, \eta_2\rangle\in R$,
+$\langle \eta_1, \eta_2\rangle\in R^{\#\star}\pi$,
 \[
     \langle
     \edenote{\pi}{\omega}{e}{S_1}{\eta_1}
     ,
     \edenote{\pi}{\omega}{e}{S_2}{\eta_2}
     \rangle
-    \in R^{\#\star}
+    \in R^{\#}\omega
 \]
 \end{theorem}
 
